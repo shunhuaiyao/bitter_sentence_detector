@@ -43,7 +43,7 @@ def parsePtt():
 	sentences_seg = []
 
 
-	output = open('./data/lol_seg.txt','w')
+	output = open('./data/lol_seg.txt','w',encoding='utf-8')
 	for post_index in range(2,3678):
 
 		content_seg = ""
@@ -107,8 +107,8 @@ def trainLSTM():
 		if BATCH_START > 3300:
 			break
 		X_batch, Y_batch, BATCH_START = get_batch(word2vecModel, BATCH_START, BATCH_SIZE, INPUT_LEN)
-		cost = model.train_on_batch(X_batch, Y_batch)
-		#pred = model.predict(X_batch, BATCH_SIZE)
+		cost = LSTMmodel.train_on_batch(X_batch, Y_batch)
+		#pred = LSTMmodel.predict(X_batch, BATCH_SIZE)
 		if step % 10 == 0:
 		    print('train cost: ', cost)
 
