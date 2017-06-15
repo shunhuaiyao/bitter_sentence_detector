@@ -14,11 +14,12 @@ from gensim import models
 # from sklearn.svm import LinearSVC
 from keras.preprocessing import sequence
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Activation
 from keras.layers import LSTM
 from keras.datasets import imdb
-from keras.optimizers import Adam
-
+from keras.optimizers import Adam, RMSprop
+from keras.datasets import mnist
+from keras.utils import np_utils
 
 global BATCH_START, BATCH_SIZE, INPUT_LEN
 
@@ -119,7 +120,6 @@ def trainLSTM():
 	print('Training ------------')
 	bitter = 0
 	non_bitter = 0
-	drop = 0
 	bitter_sentences_seg = []
 	bitter_sentences_dic = {}
 	nonbitter_sentences_seg = []
@@ -223,10 +223,113 @@ def get_batch(word2vecModel, mix_sentences_seg, mix_sentences_dic, BATCH_START, 
 	#print(BATCH_START)
 	return [X_batch, Y_batch, BATCH_START]
 
+def trainNN():
+
+	# data pre-processing
+	bitter_sentences_seg = []
+	bitter_sentences_dic = {}
+	nonbitter_sentences_seg = []
+	nonbitter_sentences_dic = {}
+	mix_sentences_seg = []
+	mix_sentences_dic = {}
+	with open('./data/training_lol_set.txt','r',encoding='utf-8') as lines:
+		for line in lines:
+			if int(line.strip('\n').split(",our_score:")[1])>1:
+				bitter_sentences_seg.append(line.strip('\n').split(",our_score:")[0])
+				bitter_sentences_dic[line.strip('\n').split(",our_score:")[0]] = 1
+			else:
+				nonbitter_sentences_seg.append(line.strip('\n').split(",our_score:")[0])
+				nonbitter_sentences_dic[line.strip('\n').split(",our_score:")[0]] = 0
+
+	# manage data unbalance
+	random.shuffle(nonbitter_sentences_seg)
+	nonbitter_sentences_seg = nonbitter_sentences_seg[:len(bitter_sentences_seg)]
+	mix_sentences_seg = bitter_sentences_seg + nonbitter_sentences_seg
+	for x in range(0,len(nonbitter_sentences_seg)):
+		mix_sentences_dic[nonbitter_sentences_seg[x]] = nonbitter_sentences_dic[nonbitter_sentences_seg[x]]
+	for x in range(0,len(bitter_sentences_seg)):
+		mix_sentences_dic[bitter_sentences_seg[x]] = bitter_sentences_dic[bitter_sentences_seg[x]]
+	random.shuffle(mix_sentences_seg)
+
+	# load word2vec model and prepare training, testing data set
+	word2vecModel = models.Word2Vec.load('./data/lol.model.bin')
+	X_set = []
+	Y_set = []
+	bitter = 0
+	non_bitter = 0
+	for x in range(len(mix_sentences_seg)):
+		tmp_sentenceVec = np.zeros(250)
+		num_words = 0
+		for word in mix_sentences_seg[x].split(" "):
+			if word != "" and word in word2vecModel.wv.vocab:
+				tmp_sentenceVec = tmp_sentenceVec + word2vecModel[word]
+				num_words += 1
+		if num_words != 0:
+			tmp_sentenceVec = tmp_sentenceVec/num_words
+			X_set.append(tmp_sentenceVec)
+			score = np.zeros(2)
+			if mix_sentences_dic[mix_sentences_seg[x]] == 1:
+				bitter += 1
+				score[0] = 1
+			else:
+				non_bitter += 1
+				score[1] = 1
+			Y_set.append(score)
+	print('bitter', bitter)
+	print('non-bitter', non_bitter)
+	# print(len(X_set))
+	# print(len(X_set[0]))
+	# print(len(Y_set))
+	# print(len(Y_set[0]))
+
+	# print(len(X_set[:(int(len(X_set)*0.8))]))
+	# print(len(Y_set[:(int(len(Y_set)*0.8))]))
+
+	# print(len(X_set[(int(len(X_set)*0.8)):]))
+	# print(len(Y_set[(int(len(Y_set)*0.8)):]))
+	
+
+	# build your neural net
+	model = Sequential([
+	    Dense(32, input_dim=250),
+	    Activation('relu'),
+	    Dense(2),
+	    Activation('softmax'),
+	])
+
+	# define your optimizer
+	rmsprop = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+
+	# add metrics to get more results you want to see
+	model.compile(optimizer=rmsprop,
+	              loss='categorical_crossentropy',
+	              metrics=['accuracy'])
+
+	print('Training ------------')
+	# train the model
+	X_training_set = np.array(X_set[:(int(len(X_set)*0.8))])
+	Y_training_set = np.array(Y_set[:(int(len(Y_set)*0.8))])
+	print('train X', len(X_training_set))
+	print('train Y', len(Y_training_set))
+	model.fit(X_training_set, Y_training_set, epochs=2, batch_size=32)
+
+	print('\nTesting ------------')
+	# Evaluate the model with the metrics we defined earlier
+	X_testing_set = np.array(X_set[(int(len(X_set)*0.8)):])
+	Y_testing_set = np.array(Y_set[(int(len(Y_set)*0.8)):])
+	print('test X', len(X_testing_set))
+	print('test Y', len(Y_testing_set))
+	loss, accuracy = model.evaluate(X_testing_set, Y_testing_set, batch_size=32)
+
+	print('\ntest loss: ', loss)
+	print('test accuracy: ', accuracy)
+
+
 
 
 if __name__ == "__main__":
 	
 	#parsePtt()
 	#trainWord2Vec()
-	trainLSTM()
+	#trainLSTM()
+	trainNN()
