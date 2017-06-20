@@ -23,75 +23,75 @@ from keras.utils import np_utils
 
 global BATCH_START, BATCH_SIZE, INPUT_LEN
 
-# def parsePtt():
-# 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-# 	jieba.set_dictionary('./data/dict.txt.big')
-# 	jieba.load_userdict('./data/customDict.txt')
-# 	jieba.analyse.set_stop_words('./data/stopwords.txt')
-# 	with open('./data/lol.json', encoding='utf-8') as data_file:
-# 		data = [json.loads(line) for line in data_file]
-# 	stopwordset = set()
-# 	with open('./data/stopwords.txt','r',encoding='utf-8') as sw:
-# 		for line in sw:
-# 			stopwordset.add(line.strip('\n'))
-# 	# print(len(data))
-# 	# import pdb
-# 	# pdb.set_trace()
+def parsePtt():
+	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+	jieba.set_dictionary('./data/dict.txt.big')
+	jieba.load_userdict('./data/customDict.txt')
+	jieba.analyse.set_stop_words('./data/stopwords.txt')
+	with open('./data/lol.json', encoding='utf-8') as data_file:
+		data = [json.loads(line) for line in data_file]
+	stopwordset = set()
+	with open('./data/stopwords.txt','r',encoding='utf-8') as sw:
+		for line in sw:
+			stopwordset.add(line.strip('\n'))
+	# print(len(data))
+	# import pdb
+	# pdb.set_trace()
 	
 
-# 	#data[post_index]["content"]
-# 	#data[post_index]["our_score"]
-# 	#data[post_index]["comments"][comment_index]["content"]
-# 	#data[post_index]["comments"][comment_index]["our_score"]
-# 	#have our scores from 2 to 101
-# 	#3678 posts in total
+	#data[post_index]["content"]
+	#data[post_index]["our_score"]
+	#data[post_index]["comments"][comment_index]["content"]
+	#data[post_index]["comments"][comment_index]["our_score"]
+	#have our scores from 2 to 101
+	#3678 posts in total
 	
-# 	#global scores, sentences_seg
-# 	#scores = []
-# 	#sentences_seg = []
+	#global scores, sentences_seg
+	#scores = []
+	#sentences_seg = []
 
 
-# 	output = open('./data/lol_seg.txt','w', encoding='utf-8')
-# 	training_set = open('./data/training_set.txt', 'w', encoding='utf-8')
-# 	skip = 0
-# 	for post_index in range(2,len(data)):
+	output = open('./data/lol_seg.txt','w', encoding='utf-8')
+	training_set = open('./data/training_set.txt', 'w', encoding='utf-8')
+	skip = 0
+	for post_index in range(2,len(data)):
 
-# 		content_seg = ""
-# 		content_list = jieba.cut(data[post_index]["content"], cut_all=False)
-# 		for content in content_list:
-# 			if content != "\n" and content != " " and content not in stopwordset:
-# 				content_seg += content+" "
-# 		output.write(content_seg+"\0")
-# 		output.write("\n")
-# 		if data[post_index].get("our_score") and content_seg != "":
-# 			#sentences_seg.append(content_seg)
-# 			#scores.append(int(data[post_index].get("our_score")))
-# 			training_set.write(content_seg+",our_score:"+data[post_index].get("our_score")+"\n")
+		content_seg = ""
+		content_list = jieba.cut(data[post_index]["content"], cut_all=False)
+		for content in content_list:
+			if content != "\n" and content != " " and content not in stopwordset:
+				content_seg += content+" "
+		output.write(content_seg+"\0")
+		output.write("\n")
+		if data[post_index].get("our_score") and content_seg != "":
+			#sentences_seg.append(content_seg)
+			#scores.append(int(data[post_index].get("our_score")))
+			training_set.write(content_seg+",our_score:"+data[post_index].get("our_score")+"\n")
 
 
-# 		for comment_index in range(0,len(data[post_index]["comments"])):
-# 			comment_seg = ""
-# 			try:
-# 				comment_list = jieba.cut(data[post_index]["comments"][comment_index]["content"].split(":")[1], cut_all=False)
-# 			except:
-# 				skip += 1
-# 				continue
-# 			for comment in comment_list:
-# 				if comment != "\n" and comment != " " and comment not in stopwordset:
-# 					comment_seg += comment+" "
-# 			output.write(comment_seg+"\0")
-# 			output.write("\n")
-# 			if data[post_index]["comments"][comment_index].get("our_score") and comment_seg != "":
-# 				#sentences_seg.append(comment_seg)
-# 				#scores.append(int(data[post_index]["comments"][comment_index].get("our_score")))
-# 				training_set.write(comment_seg+",our_score:"+data[post_index]["comments"][comment_index].get("our_score")+"\n")
-# 	print(skip)
+		for comment_index in range(0,len(data[post_index]["comments"])):
+			comment_seg = ""
+			try:
+				comment_list = jieba.cut(data[post_index]["comments"][comment_index]["content"].split(":")[1], cut_all=False)
+			except:
+				skip += 1
+				continue
+			for comment in comment_list:
+				if comment != "\n" and comment != " " and comment not in stopwordset:
+					comment_seg += comment+" "
+			output.write(comment_seg+"\0")
+			output.write("\n")
+			if data[post_index]["comments"][comment_index].get("our_score") and comment_seg != "":
+				#sentences_seg.append(comment_seg)
+				#scores.append(int(data[post_index]["comments"][comment_index].get("our_score")))
+				training_set.write(comment_seg+",our_score:"+data[post_index]["comments"][comment_index].get("our_score")+"\n")
+	print(skip)
 
-# def  trainWord2Vec():
-# 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-# 	sentences = word2vec.Text8Corpus('./data/lol_seg.txt')
-# 	model = word2vec.Word2Vec(sentences, size=100)
-# 	model.save("./data/lol.model.bin")
+def  trainWord2Vec():
+	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+	sentences = word2vec.Text8Corpus('./data/lol_seg.txt')
+	model = word2vec.Word2Vec(sentences, size=100)
+	model.save("./data/lol.model.bin")
 
 
 
@@ -329,7 +329,7 @@ def trainNN():
 
 if __name__ == "__main__":
 	
-	#parsePtt()
-	#trainWord2Vec()
-	#trainLSTM()
+	parsePtt()
+	trainWord2Vec()
+	trainLSTM()
 	trainNN()
